@@ -226,6 +226,7 @@ class GTDA(object):
             t1 = time.time()
             min_largest_diff = float("inf")
             max_largest_diff = -1*float("inf")
+            cols_to_filter=[]
             for _,i in process_order:
                 ret = worker(
                     all_M_sub[i],all_G_sub[i],curr_level[i],
@@ -234,6 +235,7 @@ class GTDA(object):
                 min_largest_diff = min(min_largest_diff,largest_diff)
                 max_largest_diff = max(max_largest_diff,largest_diff)
                 self.split_lens[component_id] = col_to_filter
+                cols_to_filter.append(col_to_filter)
                 component = np.array(self.component_records[component_id])
                 if largest_diff < split_thd:
                     self.final_components[num_final_components] = component.tolist()
@@ -254,6 +256,7 @@ class GTDA(object):
                             num_total_components += 1
             if verbose:
                 print(f"Min/max largest difference: {min_largest_diff}, {max_largest_diff}")
+                print(f"Selected classes are: {cols_to_filter}")
                 print("New components sizes:")
                 print(Counter(sizes))
             curr_level = new_level
@@ -267,6 +270,8 @@ class GTDA(object):
             for i in curr_level:
                 self.final_components[num_final_components] = self.component_records[i]
                 num_final_components += 1
+        if verbose:
+            print(f"Number of total compoents : {num_final_components}")
         self._remove_duplicate_components()
         self._filter_tiny_components(Ar,node_size_thd,verbose)
     

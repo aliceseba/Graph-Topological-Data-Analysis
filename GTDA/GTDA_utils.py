@@ -187,7 +187,7 @@ def compute_recall(labels,pre_labels,pred,test_only=True,test_nodes=None):
         recalls.append(1.0*curr/num_errors)
     return recalls
 
-def SPoC(model,dataloaders,key_map=None,is_normalize=False,indices_to_ignore=None,pooling="max",device='cuda'):
+def SPoC(model,dataloaders,key_map=None,is_normalize=False,indices_to_ignore=None,pooling="max",device='cpu'):
     model = model.to(device)
     X = []
     y = []
@@ -204,7 +204,7 @@ def SPoC(model,dataloaders,key_map=None,is_normalize=False,indices_to_ignore=Non
                 tmp = model.layer3(tmp)
                 tmp = model.layer4(tmp)
                 if pooling == "max":
-                    pooling_layer = torch.nn.AdaptiveMaxPool2d(output_size=(1,1)).cuda()
+                    pooling_layer = torch.nn.AdaptiveMaxPool2d(output_size=(1,1))
                     tmp = pooling_layer(tmp)
                 else:
                     tmp = model.avgpool(tmp)
@@ -227,12 +227,12 @@ def SPoC(model,dataloaders,key_map=None,is_normalize=False,indices_to_ignore=Non
         torch.cuda.empty_cache()
     return X,y,preds
 
-def knn_cuda(features,train_features,k):
+def knn_cpu(features,train_features,k):
     similarity = torch.mm(features, train_features)
-    distances, indices = similarity.topk(k, largest=True, sorted=True)
+    distances, indices = torch.topk(similarity, k, largest=True, sorted=True)
     return distances, indices
 
-def knn_cuda_batched(features,train_features,k,batch_size,device='cuda'):
+def knn_batched(features,train_features,k,batch_size,device='cpu'):
     features = features.to(device)
     overall_distances = None
     overall_indices = None
@@ -260,15 +260,15 @@ This function builds a KNN graph with 'X', which is num_samples-by-num_embedding
 It only supports cosine similarity. Consider to reduce batch_size or batch_size_training if GPU memory is not big enough.
 This function assumes X has already been normalized such that the l2 norm of each row equals to 1.
 """
-def knn_cuda_graph(X,knn,batch_size,thd=0,device=None,batch_training=False,batch_size_training=50000):
+def knn_graph(X,knn,batch_size,thd=0,device=None,batch_training=False,batch_size_training=10000):
     ei,ej = [],[]
     for i in tqdm(range(0,X.shape[0],batch_size)):
         start_i = i
         end_i = min(start_i+batch_size,X.shape[0])
         if batch_training:
-            distances,batch_indices = knn_cuda_batched(X[start_i:end_i,:],X,knn+1,batch_size_training)
+            distances,batch_indices = knn_batched(X[start_i:end_i,:],X,knn+1,batch_size_training)
         else:
-            distances,batch_indices = knn_cuda(X[start_i:end_i,:],X.t(),knn+1)
+            distances,batch_indices = knn_cpu(X[start_i:end_i,:],X.t(),knn+1)
         for xi in range(batch_indices.shape[0]):
             cnt = 0
             for j,xj in enumerate(batch_indices[xi,:]):
@@ -334,7 +334,7 @@ Note: if the original graph is not connected, it's possible that some components
 def compute_reeb(GTDA,nn_model,labels_to_eval,smallest_component,overlap,extra_lens=None,
     node_size_thd=5,reeb_component_thd=5,alpha=0.5,nsteps_preprocess=5,nsteps_mixing=10,is_merging=True,
     split_criteria='diff',split_thd=0,is_normalize=True,is_standardize=False,merge_thd=1.0,max_split_iters=200,
-    max_merge_iters=10,nprocs=1,device='cuda',degree_normalize_preprocess=1,degree_normalize_mixing=1,verbose=False):
+    max_merge_iters=10,nprocs=1,device='cpu',degree_normalize_preprocess=1,degree_normalize_mixing=1,verbose=False):
     if isinstance(overlap,tuple) == False:
         assert(overlap > 0)
         assert(overlap < 1)

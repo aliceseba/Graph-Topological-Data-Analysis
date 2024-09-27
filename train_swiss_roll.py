@@ -12,6 +12,7 @@ import shutil
 import copy
 from argparse import Namespace
 from sklearn.decomposition import PCA
+import numpy as np
 # %%
 n_samples = 1000
 noise = 1.2
@@ -22,7 +23,7 @@ labels[np.nonzero(y<=np.quantile(y,0.33))] = 0
 labels[np.nonzero((y>np.quantile(y,0.33))*(y<=np.quantile(y,0.66)))] = 1
 labels[np.nonzero(y>np.quantile(y,0.66))] = 2
 G = kneighbors_graph(X, n_neighbors=5, include_self=False)
-G = ((G+G.T)>0).astype(np.int)
+G = ((G+G.T)>0).astype(int)
 # %%
 name = "swiss_roll"
 root = "dataset"
@@ -135,8 +136,7 @@ Dinv = sp.spdiags(1/pca.singular_values_,0,Xr.shape[1],Xr.shape[1])
 Xr = Xr@Dinv
 Xr = normalize(Xr)
 knn = 2
-A_knn = knn_cuda_graph(
-    torch.tensor(Xr).cuda(),knn,256)
+A_knn = knn_graph(torch.tensor(Xr),knn,256)
 # augmenting the original graph with a KNN from embeddings
 A_all = ((A_knn+A)>0).astype(np.float32)
 # %%
