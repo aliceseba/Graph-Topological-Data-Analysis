@@ -517,8 +517,8 @@ class GTDA(object):
             all_edge_index[0] += [i]*len(neighs)
             all_edge_index[1] += neighs
         A_tmp = sp.csr_matrix(
-            (np.ones(len(all_edge_index[1])),(all_edge_index[0],all_edge_index[1])),shape=(
-                reeb_dim,reeb_dim))
+            (np.ones(len(all_edge_index[1])),(all_edge_index[0],all_edge_index[1])),
+            shape=(reeb_dim,reeb_dim))
         A_tmp = ((A_tmp+A_tmp.T)>0).astype(np.float64)
         _,components_left1 = find_components(A_tmp,size_thd=0)
         components_removed = []
@@ -568,8 +568,8 @@ class GTDA(object):
                         extra_edges[1].append(closest_neigh)
                         modified = True
             A_tmp = sp.csr_matrix(
-                (np.ones(len(all_edge_index[1])),(all_edge_index[0],all_edge_index[1])),shape=(
-                    reeb_dim,reeb_dim))
+                (np.ones(len(all_edge_index[1])),(all_edge_index[0],all_edge_index[1])),
+                shape=(reeb_dim,reeb_dim))
             A_tmp = ((A_tmp+A_tmp.T)>0).astype(np.float64)
             _,components_left1 = find_components(A_tmp,size_thd=0)
             components_removed = []
