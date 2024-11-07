@@ -54,7 +54,8 @@ def run(args, dataset, data, model):
             pred = logits[mask].max(1)[1]
             acc = pred.eq(data.y[mask]).sum().item() / mask.sum().item()
 
-            loss = F.nll_loss(model(data.x, data.edge_index)[mask], data.y[mask])
+            loss = F.nll_loss(F.log_softmax(model(data.x, data.edge_index)[mask], dim=1), data.y[mask])
+
 
             preds.append(pred.detach().cpu())
             accs.append(acc)

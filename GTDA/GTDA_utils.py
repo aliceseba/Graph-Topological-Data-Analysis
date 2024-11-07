@@ -80,8 +80,7 @@ def random_splits(data, num_classes, train_percent=0.1, val_percent=0.1, seed=0)
 
     data.train_mask = index_to_mask(train_index, size=data.num_nodes)
     data.val_mask = index_to_mask(val_index, size=data.num_nodes)
-    data.test_mask = index_to_mask(
-        test_index, size=data.num_nodes)
+    data.test_mask = index_to_mask(test_index, size=data.num_nodes)
     return data
 
 
@@ -441,11 +440,15 @@ def plot_reeb_component(
         ymin,ymax = ycoords.min()-0.1,ycoords.max()+0.1
         ax.set_xlim(xmin,xmax)
         ax.set_ylim(ymin,ymax)
-        nx.draw(
-            nx.from_scipy_sparse_matrix(G),pos,node_size=df.sizes.values,
-            node_color=node_colors,
-            width=linewidth,ax=ax,edgecolors=[0,0,0,nodeedgecolors],linewidths=nodelinewidths,
-            edge_color=[0,0,0,linealpha])
+        ax.scatter(xcoords, ycoords, s=df.sizes.values[i], color=node_colors, zorder=node_zorder)
+        G = G.tocoo()
+        for ei,ej in zip(G.row,G.col):
+            ax.plot(
+                [pos[ei][0],pos[ej][0]],
+                [pos[ei][1],pos[ej][1]],
+                c='black',linewidth=linewidth,
+                alpha=linealpha,zorder=edge_zorder)
+        ax.axis('off')
     else:
         xmin,xmax = xcoords.min()-0.1,xcoords.max()+0.1
         ymin,ymax = ycoords.min()-0.1,ycoords.max()+0.1

@@ -3,7 +3,8 @@ import torch.nn.functional as F
 import torch_geometric.transforms as T
 from .GTDA_utils import *
 import pytorch_lightning as pl
-from torch_geometric.nn import GCNConv
+from torch.nn import Linear, Sequential, ReLU, BatchNorm1d as BN
+from torch_geometric.nn import GCNConv, GINConv, SAGEConv
 from torchmetrics import Accuracy
 import torchvision.models as torch_models
 from torchvision.datasets import ImageFolder
@@ -148,3 +149,26 @@ class GCN(torch.nn.Module):
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.convs[-1](x, adj_t)
         return x
+
+class GIN(torch.nn.Module):
+	def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
+              dropout):
+		super(GIN, self).__init__()
+
+		nn1 = Sequential(Linear(in_channels, hidden_channels), ReLU(), Linear(hidden_channels, hidden_channels))
+		self.conv1 = GINConv(nn1)
+		self.bn1 = torch.nn.BatchNorm1d(hidden_channels)
+
+		nn2 = Sequential(Linear(hidden_channels, hidden_channels), ReLU(), Linear(hidden_channels, out_channels))
+		self.conv2 = GINConv(nn2)
+		self.bn2 = torch.nn.BatchNorm1d(out_channels)
+
+		self.drop = torch.nn.Dropout(p=dropout)
+
+	def forward(self, x, edge_index):
+		x = F.relu(self.conv1(x, edge_index))
+		x = self.bn1(x)
+		x = self.drop(x)
+		x = F.relu(self.conv2(x, edge_index))
+		x = self.bn2(x)
+		return x
